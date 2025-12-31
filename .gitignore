@@ -1,0 +1,31 @@
+# ===== Dataset JSON files =====
+document_bn_.json
+document_bn_clean.json
+document_en_.json
+document_en_clean.json
+
+# ===== BM25 / IR models =====
+bm25_bn.pkl
+bm25_en.pkl
+
+# ===== General pickle & data =====
+*.pkl
+*.json
+
+# Optional: data folders
+data/
+datasets/
+script/
+
+# Python cache
+__pycache__/
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+.venv/
+
+# Logs / outputs
+logs/
+outputs/
+results/
