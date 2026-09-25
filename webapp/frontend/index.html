@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bangla–English CLIR</title>
+  <meta name="description" content="Cross-lingual search over Bangla and English news: BM25 retrieval with MarianMT query translation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#search">
+        <span class="brand-mark" aria-hidden="true">অ<span>A</span></span>
+        <span class="brand-text">CLIR <small>Bangla ⇄ English</small></span>
+      </a>
+      <nav class="tabs" role="tablist">
+        <a href="#search" role="tab" data-tab="search">Search</a>
+        <a href="#explore" role="tab" data-tab="explore">Explore</a>
+        <a href="#dataset" role="tab" data-tab="dataset">Dataset</a>
+      </nav>
+      <div class="topbar-right">
+        <span id="mt-status" class="pill" title="Translation model status">MT: …</span>
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle dark mode">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- SEARCH -->
+    <section id="view-search" class="view">
+      <div class="hero">
+        <h1>Search the news in <span class="bn">বাংলা</span> or English</h1>
+        <p class="lede">Type a query in either language. It's searched as typed in its own language, then machine-translated and searched in the other language, so both columns show matching articles.</p>
+        <form id="search-form" class="searchbox" autocomplete="off">
+          <input id="q" name="q" type="search" placeholder="e.g. তারেক রহমান  ·  Bangladesh cricket" aria-label="Search query" required>
+          <select id="k" aria-label="Results per language">
+            <option value="5">Top 5</option>
+            <option value="10" selected>Top 10</option>
+            <option value="20">Top 20</option>
+          </select>
+          <button type="submit" class="btn-primary">Search</button>
+        </form>
+        <div class="examples" id="examples"></div>
+      </div>
+
+      <div id="search-pipeline" class="pipeline" hidden></div>
+      <div id="search-results" class="results-grid"></div>
+    </section>
+
+    <!-- EXPLORE -->
+    <section id="view-explore" class="view" hidden>
+      <div class="section-head">
+        <h2>Explore the corpus</h2>
+        <p class="muted">Browse the cleaned documents behind each index.</p>
+      </div>
+      <div class="filters">
+        <div class="seg" role="group" aria-label="Language">
+          <button data-lang="en" class="active">English</button>
+          <button data-lang="bn">বাংলা</button>
+        </div>
+        <select id="ex-source" aria-label="Source"><option value="">All sources</option></select>
+        <input id="ex-text" type="search" placeholder="Filter by title…" aria-label="Filter by title">
+        <span id="ex-count" class="muted small"></span>
+      </div>
+      <div id="ex-list" class="doc-list"></div>
+      <div class="pager">
+        <button id="ex-prev" class="btn">← Prev</button>
+        <span id="ex-page" class="muted small"></span>
+        <button id="ex-next" class="btn">Next →</button>
+      </div>
+    </section>
+
+    <!-- DATASET -->
+    <section id="view-dataset" class="view" hidden>
+      <div class="section-head">
+        <h2>Dataset & pipeline</h2>
+        <p class="muted">What was crawled, what survived cleaning, and how the system is built.</p>
+      </div>
+      <div id="ds-tiles" class="tiles"></div>
+      <div class="chart-grid">
+        <figure class="card chart-card">
+          <figcaption><h3>English documents by source</h3></figcaption>
+          <div id="ch-src-en" class="viz-root" data-series="en"></div>
+        </figure>
+        <figure class="card chart-card">
+          <figcaption><h3>Bangla documents by source</h3></figcaption>
+          <div id="ch-src-bn" class="viz-root" data-series="bn"></div>
+        </figure>
+        <figure class="card chart-card">
+          <figcaption><h3>English document length</h3><p class="muted small">Documents per token-count range (cleaning kept ≥ 20 tokens)</p></figcaption>
+          <div id="ch-len-en" class="viz-root" data-series="en"></div>
+        </figure>
+        <figure class="card chart-card">
+          <figcaption><h3>Bangla document length</h3><p class="muted small">Documents per token-count range (cleaning kept ≥ 20 tokens)</p></figcaption>
+          <div id="ch-len-bn" class="viz-root" data-series="bn"></div>
+        </figure>
+      </div>
+
+      <h3 class="subhead">How it works</h3>
+      <ol class="modules">
+        <li class="card"><span class="mod-tag">Module A</span><h4>Dataset construction</h4>
+          <p>RSS feeds plus sitemap and section-page crawling (BeautifulSoup, trafilatura) across Bangla and English Bangladeshi newspapers. Each document stores title, body, date, URL, language and token count.</p></li>
+        <li class="card"><span class="mod-tag">Module B</span><h4>Query processing</h4>
+          <p>Documents under 20 tokens are removed, and English text is lowercased with whitespace normalized. Query language is detected from the Bengali Unicode block (U+0980–U+09FF).</p></li>
+        <li class="card"><span class="mod-tag">Module C</span><h4>Retrieval</h4>
+          <p>One BM25 (Okapi) index per language. The English tokenizer strips punctuation; the Bangla tokenizer splits on whitespace.</p></li>
+        <li class="card"><span class="mod-tag">Module D</span><h4>Cross-lingual search</h4>
+          <p>MarianMT translates the query (<code>opus-mt-bn-en</code> and <code>opus-mt-en-to-bn</code>). The original query searches its own language's index and the translation searches the other.</p></li>
+      </ol>
+    </section>
+  </main>
+
+  <dialog id="doc-modal">
+    <article>
+      <header>
+        <div id="dm-meta" class="meta"></div>
+        <button class="icon-btn" id="dm-close" aria-label="Close">✕</button>
+      </header>
+      <h2 id="dm-title"></h2>
+      <div id="dm-body" class="doc-body"></div>
+      <footer><a id="dm-link" class="btn-primary" target="_blank" rel="noopener">Open original article ↗</a></footer>
+    </article>
+  </dialog>
+
+  <div id="tooltip" class="tooltip" role="status" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
