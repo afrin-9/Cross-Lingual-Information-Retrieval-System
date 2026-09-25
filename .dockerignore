@@ -1,0 +1,6 @@
+.git
+script/
+Experiment/
+**/__pycache__
+**/.ipynb_checkpoints
+*.pkl
