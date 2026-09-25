@@ -1,0 +1,10 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+rank-bm25==0.2.2
+numpy
+# Query translation (MarianMT). Optional: the app still runs without these,
+# with CLIR_TRANSLATION=off or if they fail to load.
+torch
+transformers>=4.36
+sentencepiece
+sacremoses
